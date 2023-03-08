@@ -1,0 +1,73 @@
+from netmiko import ConnectHandler
+import datetime
+import json
+import tkinter as tk
+from tkinter import filedialog
+import getpass
+import re
+
+username1 = input('Please enter the Username: ')
+password1 = getpass.getpass('Please enter the password: ')
+
+root = tk.Tk()
+root.withdraw()
+
+fileIP_path = filedialog.askopenfilename(title="Plese Open IP File")
+print(fileIP_path)
+
+fileCommand_path = filedialog.askopenfilename(title="Plese Open CommandFile")
+print(fileCommand_path)
+
+my_devices = open(fileIP_path,"r")
+device_list = list() #create an empty list to use it later
+
+for device_ip in my_devices:
+    device = {
+        'device_type': 'cisco_xr',
+        "host": device_ip,
+        'username': username1,
+        'password': password1,
+        'secret': password1
+    }
+    device_list.append(device)
+
+json_formatted = json.dumps(device_list, indent=4)
+print(json_formatted) #list of dictionaries
+
+for each_device in device_list:
+    connection = ConnectHandler(**each_device)
+    connection.enable()
+    print(f'Connecting to {each_device["host"]}')
+    ################### Find Hostname ####################
+    hostname = connection.find_prompt()
+    hostname1 = hostname                        #Use for keep in send command
+    hostname2 = hostname                        #Use for keep hostname in to txt file
+    print(hostname1)
+    ############ Remove un-use word to keep in file ###########
+    ch = ':'
+    # The Regex pattern to match al characters on and before '-'
+    pattern = ".*" + ch
+    # Remove all characters before the character '-' from string
+    hostname2 = re.sub(pattern, '', hostname2)
+    hostname2 = hostname2.replace("#", "")
+    print(hostname2)
+    ################### Use Command And Backup ####################
+    with open(fileCommand_path,"r") as COMMANDS:
+        output = ''
+        for CMD in COMMANDS:
+            output += hostname1 + CMD + connection.send_command(CMD) + '\n' + '+' * 80 + '\n'
+        #print(output)
+    endtime = datetime.datetime.now()
+    #print('Total execution time: ', endtime)
+    hostname = hostname[:-1]
+    IP_Device = each_device["host"]
+    ######## save file ###########
+    print ('Initialing Configure Backup in progress…\n!')
+    Save_file = open('SSH to ' + hostname2 + ' - ' + IP_Device.strip() + '.txt', 'w')
+    Save_file.write(output)
+    Save_file.write('Collect Date : ' + str(endtime))
+    Save_file.close
+    print('Finished Backup!')
+    connection.disconnect()
+
+input("Press Any key to Exit")
