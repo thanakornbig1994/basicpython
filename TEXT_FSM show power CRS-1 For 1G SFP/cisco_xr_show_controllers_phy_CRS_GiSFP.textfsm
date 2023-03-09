@@ -1,0 +1,12 @@
+Value Filldown INTERFACE (\S+/\S+)
+Value TX_VALUE (.+?)
+Value RX_VALUE (.+?)
+
+Start
+ ^int\s+${INTERFACE}+:
+ ^\s+Environmental\s+Information\s+-\s+raw\s+values ->  Controllers
+
+Controllers
+ ^\s+Tx\s+power:\s+${TX_VALUE}\s+dBm.+?
+ ^\s+Rx\s+power:\s+${RX_VALUE}\s+dBm.+?  -> Record
+ ^\S -> Clearall Start
