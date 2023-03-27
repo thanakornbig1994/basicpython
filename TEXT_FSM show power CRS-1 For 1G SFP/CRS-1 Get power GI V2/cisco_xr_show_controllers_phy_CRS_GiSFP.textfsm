@@ -1,0 +1,19 @@
+Value Filldown INTERFACE (\S+/\S+)
+Value Vendor_Name (\S*)
+Value Vendor_Part_Number (\S*)
+Value Vendor_SN (.+)
+Value TX_VALUE (.+?)
+Value RX_VALUE (.+?)
+
+
+Start
+ ^int\s+${INTERFACE}+:
+ ^\s+Vendor\s+name:+\s+${Vendor_Name}
+ ^\s+Vendor\s+Part\s+Number\s+.*(PN)+.:\s+${Vendor_Part_Number} 
+ ^\s+Vendor\s+SN\s+.*(SN).:\s+${Vendor_SN}
+ ^\s+Environmental\s+Information\s+-\s+raw\s+values ->  Controllers
+
+Controllers
+ ^\s+Tx\s+power:\s+${TX_VALUE}\s+dBm.+?
+ ^\s+Rx\s+power:\s+${RX_VALUE}\s+dBm.+?  -> Record
+ ^\S -> Clearall Start
